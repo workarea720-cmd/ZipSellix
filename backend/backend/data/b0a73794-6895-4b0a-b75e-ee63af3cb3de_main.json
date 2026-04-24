@@ -1,0 +1,54 @@
+{
+    "profile": {
+        "isSetupComplete": true,
+        "businessType": "SERVICE",
+        "businessName": "kyu",
+        "ownerName": "anas",
+        "settings": {
+            "monthlyRent": 0.0,
+            "monthlySalary": 0.0,
+            "monthlyHosting": 0.0,
+            "monthlyInternet": 0.0,
+            "monthlyFixedCost": 0.0,
+            "packagingCost": 67.0,
+            "courierRates": [
+                {
+                    "name": "Leopard",
+                    "sameCity": 150.0,
+                    "sameProv": 180.0,
+                    "crossProv": 220.0,
+                    "kg": 100.0
+                }
+            ],
+            "couriers": [
+                "Leopard"
+            ],
+            "channels": [
+                "WhatsApp",
+                "TikTok"
+            ],
+            "logo": null,
+            "phone": "",
+            "address": ""
+        },
+        "city": "pta nai",
+        "province": "Punjab"
+    },
+    "products": [],
+    "batches": [],
+    "orders": [],
+    "services": [
+        {
+            "id": "303beffd",
+            "name": "njuy",
+            "productionCost": 30.0,
+            "sellingPrice": 60.0,
+            "estimatedTime": "3-5 Days",
+            "description": "",
+            "deleted": true
+        }
+    ],
+    "stores": {},
+    "documents": [],
+    "shipments": []
+}

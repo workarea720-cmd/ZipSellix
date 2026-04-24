@@ -1,0 +1,57 @@
+﻿src/app/settings/SettingsClient.tsx(758,18): error TS17008: JSX element 'SettingsCard' has no corresponding closing tag.
+src/app/settings/SettingsClient.tsx(773,30): error TS17008: JSX element 'table' has no corresponding closing tag.
+src/app/settings/SettingsClient.tsx(799,45): error TS1003: Identifier expected.
+src/app/settings/SettingsClient.tsx(799,47): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(802,37): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(803,13): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(804,17): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(806,21): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(808,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(809,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(810,63): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(811,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(812,34): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(813,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(814,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(816,23): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(817,24): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(818,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(820,63): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(821,13): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(822,95): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(823,40): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(825,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(826,55): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(827,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(828,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(830,81): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/settings/SettingsClient.tsx(831,74): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(833,17): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(838,21): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(842,54): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(842,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(843,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(844,78): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(845,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(846,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(847,35): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(848,55): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(848,71): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(849,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(850,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(941,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(944,9): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(945,21): error TS1005: '}' expected.
+src/app/settings/SettingsClient.tsx(945,31): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(982,43): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/settings/SettingsClient.tsx(990,35): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(992,27): error TS17002: Expected corresponding JSX closing tag for 'td'.
+src/app/settings/SettingsClient.tsx(993,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(994,19): error TS17002: Expected corresponding JSX closing tag for 'tr'.
+src/app/settings/SettingsClient.tsx(995,13): error TS1005: ')' expected.
+src/app/settings/SettingsClient.tsx(995,15): error TS17002: Expected corresponding JSX closing tag for 'tbody'.
+src/app/settings/SettingsClient.tsx(997,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/settings/SettingsClient.tsx(1010,13): error TS1005: ')' expected.
+src/app/settings/SettingsClient.tsx(1011,9): error TS1005: ')' expected.
+src/app/settings/SettingsClient.tsx(1012,5): error TS1109: Expression expected.
+src/app/settings/SettingsClient.tsx(1013,1): error TS1128: Declaration or statement expected.

@@ -1,0 +1,190 @@
+{
+    "profile": {
+        "isSetupComplete": true,
+        "businessType": "STOCK",
+        "businessName": "stand",
+        "ownerName": "laptop",
+        "settings": {
+            "monthlyRent": 0.0,
+            "monthlySalary": 0.0,
+            "monthlyHosting": 0.0,
+            "monthlyInternet": 0.0,
+            "monthlyFixedCost": 0.0,
+            "packagingCost": 67.0,
+            "courierRates": [
+                {
+                    "name": "Leopard",
+                    "sameCity": 150.0,
+                    "sameProv": 180.0,
+                    "crossProv": 220.0,
+                    "kg": 100.0
+                }
+            ],
+            "couriers": [
+                "Leopard"
+            ],
+            "channels": [
+                "Daraz",
+                "TikTok"
+            ],
+            "logo": null,
+            "phone": "",
+            "address": ""
+        },
+        "city": "grw",
+        "province": "Punjab"
+    },
+    "products": [
+        {
+            "id": "cb87fa93",
+            "name": "laptop",
+            "sku": "SKU-105736",
+            "category": "General",
+            "sellingPrice": 0.0,
+            "currentStock": 0
+        },
+        {
+            "id": "9188417c",
+            "name": "biscut",
+            "sku": "SKU-550623",
+            "category": "General",
+            "sellingPrice": 0.0,
+            "currentStock": 0
+        },
+        {
+            "id": "a1ff9a31",
+            "name": "zip",
+            "sku": "SKU-321041",
+            "category": "General",
+            "sellingPrice": 50.0,
+            "currentStock": 9
+        }
+    ],
+    "batches": [
+        {
+            "id": "4d31e223",
+            "productId": "a1ff9a31",
+            "batchName": "901",
+            "date": "2026-04-18",
+            "initialQty": 12,
+            "remainingQty": 9,
+            "costPerItem": 30.0,
+            "totalCost": 360.0
+        }
+    ],
+    "orders": [
+        {
+            "id": "074b7440",
+            "orderId": "ORD-1002",
+            "customerName": "mr",
+            "city": "karachi",
+            "province": "Sindh",
+            "courier": "Leopard",
+            "weight": 0.5,
+            "status": "PENDING",
+            "paymentType": "COD",
+            "date": "2026-04-18",
+            "isFreeShipping": false,
+            "shippingCost": 300.0,
+            "actualShippingCost": 300.0,
+            "packagingCost": 0,
+            "itemsTotal": 1500.0,
+            "totalAmount": 1800.0,
+            "items": [
+                {
+                    "productId": "a4f2e8c7",
+                    "quantity": 1,
+                    "salePrice": 1500.0
+                }
+            ]
+        },
+        {
+            "id": "a5ad812d",
+            "orderId": "ORD-1003",
+            "customerName": "hina",
+            "city": "grw",
+            "province": "Punjab",
+            "courier": "Leopard",
+            "weight": 0.5,
+            "status": "DELIVERED",
+            "paymentType": "ONLINE",
+            "date": "2026-04-18",
+            "isFreeShipping": false,
+            "shippingCost": 300.0,
+            "actualShippingCost": 300.0,
+            "packagingCost": 0,
+            "itemsTotal": 1500.0,
+            "totalAmount": 1800.0,
+            "items": [
+                {
+                    "productId": "a4f2e8c7",
+                    "quantity": 1,
+                    "salePrice": 1500.0
+                }
+            ]
+        },
+        {
+            "id": "de73dfdc",
+            "orderId": "ORD-1004",
+            "customerName": "peno",
+            "city": "sea-view",
+            "province": "Sindh",
+            "courier": "Leopard",
+            "weight": 0.5,
+            "status": "DELIVERED",
+            "paymentType": "ONLINE",
+            "date": "2026-04-18",
+            "isFreeShipping": false,
+            "shippingCost": 220.0,
+            "actualShippingCost": 0.0,
+            "packagingCost": 0.0,
+            "itemsTotal": 1500.0,
+            "totalAmount": 1720.0,
+            "items": [
+                {
+                    "productId": "a4f2e8c7",
+                    "quantity": 1,
+                    "salePrice": 1500.0
+                }
+            ]
+        },
+        {
+            "id": "ed8eaf6d",
+            "orderId": "ORD-1005",
+            "customerName": "ahmad",
+            "city": "gujranwala",
+            "province": "Punjab",
+            "courier": "Leopard",
+            "weight": 0.5,
+            "status": "RTO",
+            "paymentType": "COD",
+            "date": "2026-04-18",
+            "isFreeShipping": false,
+            "shippingCost": 180.0,
+            "actualShippingCost": 0.0,
+            "packagingCost": 78.0,
+            "itemsTotal": 1500.0,
+            "totalAmount": 1758.0,
+            "items": [
+                {
+                    "productId": "a4f2e8c7",
+                    "quantity": 1,
+                    "salePrice": 1500.0
+                }
+            ]
+        }
+    ],
+    "services": [
+        {
+            "id": "6fe3956a",
+            "name": "wallet",
+            "productionCost": 1200.0,
+            "sellingPrice": 1500.0,
+            "estimatedTime": "3-5 Days",
+            "description": ""
+        }
+    ],
+    "stores": {},
+    "documents": [],
+    "shipments": []
+}

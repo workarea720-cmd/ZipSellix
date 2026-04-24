@@ -1,0 +1,89 @@
+{
+    "profile": {
+        "isSetupComplete": true,
+        "businessType": "STOCK",
+        "businessName": "c",
+        "ownerName": "a",
+        "settings": {
+            "monthlyRent": 0.0,
+            "monthlySalary": 0.0,
+            "monthlyHosting": 0.0,
+            "monthlyInternet": 0.0,
+            "monthlyFixedCost": 0.0,
+            "packagingCost": 0.0,
+            "courierRates": [
+                {
+                    "name": "PostEx",
+                    "sameCity": 100.0,
+                    "sameProv": 165.0,
+                    "crossProv": 201.0,
+                    "kg": 50.0
+                }
+            ],
+            "couriers": [
+                "PostEx"
+            ],
+            "channels": [
+                "Facebook"
+            ],
+            "logo": null,
+            "phone": "",
+            "address": ""
+        },
+        "city": "b",
+        "province": "Punjab"
+    },
+    "products": [
+        {
+            "id": "2c0f2223",
+            "name": "njj",
+            "sku": "SKU-664639",
+            "category": "General",
+            "sellingPrice": 60.0,
+            "currentStock": 7
+        }
+    ],
+    "batches": [
+        {
+            "id": "491a574f",
+            "productId": "2c0f2223",
+            "batchName": "B-4716",
+            "date": "2026-04-18",
+            "initialQty": 7,
+            "remainingQty": 6,
+            "costPerItem": 35.0,
+            "totalCost": 245.0
+        }
+    ],
+    "orders": [
+        {
+            "id": "8a1cdfad",
+            "orderId": "ORD-1001",
+            "customerName": "kjhk",
+            "city": "lk",
+            "province": "KPK",
+            "courier": "PostEx",
+            "weight": 0.5,
+            "status": "PENDING",
+            "paymentType": "COD",
+            "date": "2026-04-18",
+            "isFreeShipping": false,
+            "shippingCost": 201.0,
+            "actualShippingCost": 201.0,
+            "packagingCost": 0.0,
+            "itemsTotal": 60.0,
+            "totalAmount": 261.0,
+            "items": [
+                {
+                    "productId": "2c0f2223",
+                    "quantity": 1,
+                    "salePrice": 60.0
+                }
+            ]
+        }
+    ],
+    "services": [],
+    "stores": {},
+    "documents": [],
+    "shipments": []
+}

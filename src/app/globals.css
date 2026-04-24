@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #304250;
+
+  /* Semantic UI Colors */
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0; /* slate-200 */
+  --card-border-subtle: #f1f5f9; /* slate-100 */
+
+  --text-main: #465b6d; /* Lighter brand shade */
+  --text-muted: #64748b; /* slate-500 */
+  --text-muted-light: #94a3b8; /* slate-400 */
+
+  --bg-subtle: #f8fafc; /* slate-50 */
+  --bg-muted: #f1f5f9; /* slate-100 */
+}
+
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Mapping Semantic Variables to Tailwind utilities */
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-card-border-subtle: var(--card-border-subtle);
+  
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-muted-light: var(--text-muted-light);
+
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-muted: var(--bg-muted);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* ── ZipSellix Brand Tokens (60-30-10) ── */
+  --color-brand-primary: #20A46B;
+  --color-brand-primary-hover: #1a8356;
+  --color-brand-primary-light: var(--color-brand-primary-light, #eaf6f0);
+  --color-brand-secondary: #304250;
+  --color-brand-secondary-hover: #23313c;
+  --color-brand-heading: var(--color-brand-heading, #304250);
+  --color-brand-accent: #EEBE1C;
+  --color-brand-accent-light: var(--color-brand-accent-light, #fdf8e8);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hide floating tool buttons when mobile sidebar is open */
+.is-sidebar-open .fixed.z-50 {
+  display: none !important;
+}
+
+/* ── Global Scrollbar Styling ── */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* slate-200 */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1; /* slate-300 */
+    background-clip: content-box;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 transparent;
+  }
+}
+
+/* Hide the default browser eye icon in password fields */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

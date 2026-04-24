@@ -1,0 +1,41 @@
+{
+    "profile": {
+        "isSetupComplete": true,
+        "businessType": "SERVICE",
+        "businessName": "b",
+        "ownerName": "a",
+        "settings": {
+            "monthlyRent": 0.0,
+            "monthlySalary": 0.0,
+            "monthlyHosting": 0.0,
+            "monthlyInternet": 0.0,
+            "monthlyFixedCost": 0.0,
+            "packagingCost": 35.0,
+            "courierRates": [
+                {
+                    "name": "Leopard",
+                    "sameCity": 150.0,
+                    "sameProv": 180.0,
+                    "crossProv": 220.0,
+                    "kg": 100.0
+                }
+            ],
+            "couriers": [
+                "Leopard"
+            ],
+            "channels": [],
+            "logo": null,
+            "phone": "",
+            "address": ""
+        },
+        "city": "c",
+        "province": "Punjab"
+    },
+    "products": [],
+    "batches": [],
+    "orders": [],
+    "services": [],
+    "stores": {},
+    "documents": [],
+    "shipments": []
+}
