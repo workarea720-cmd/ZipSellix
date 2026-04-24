@@ -225,3 +225,5 @@ export default function Sidebar({ activeTab, setActiveTab, businessType = 'STOCK
         </>
     );
 }
+
+// test change for CodeRabbit
