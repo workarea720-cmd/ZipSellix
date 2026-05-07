@@ -147,6 +147,8 @@ export function useBackgroundRemoverLogic() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     /* ── Remove background ── */
+    // ✅ CHANGED: Now calls Next.js proxy /api/bg-remove instead of Python directly.
+    // The proxy checks session + enforces 3/day free limit before forwarding to Python.
     const processImage = async (imageFile: File) => {
         setState('processing');
         setError(null);
@@ -156,10 +158,18 @@ export function useBackgroundRemoverLogic() {
         formData.append('file', imageFile);
 
         try {
-            const res = await fetch('http://localhost:8000/remove-bg', {
+            const res = await fetch('/api/bg-remove', {
                 method: 'POST',
                 body: formData,
             });
+
+            if (res.status === 403) {
+                const data = await res.json();
+                setError(data.error || 'Daily limit reached. Upgrade to Pro for unlimited access!');
+                setState('idle');
+                return;
+            }
+
             if (!res.ok) throw new Error('Backend processing failed');
             const blob = await res.blob();
             setProcessedBlob(blob);

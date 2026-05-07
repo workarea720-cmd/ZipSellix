@@ -41,7 +41,8 @@ export const ShippingLabelSchema = z.object({
     receiverEmail: z.string().email("Invalid email").optional().or(z.literal('')),
     receiverAddress: z.string().min(5, "Address is too short"),
     receiverCity: z.string().min(1, "City is required"),
-    receiverProvince: z.string().optional(),
+    // ✅ FIXED: Province mandatory hai — Leopards aur baaki couriers ke liye zaroori
+    receiverProvince: z.string().min(1, "Province is required for courier booking"),
 
     // Instructions & Services
     instructions: z.object({

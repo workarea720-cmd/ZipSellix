@@ -17,7 +17,7 @@ export async function getProducts() {
             where: { userId: session.user.id },
             include: {
                 batches: {
-                    orderBy: { date: 'desc' }
+                    orderBy: { dateAdded: 'desc' }
                 }
             },
             orderBy: { name: 'asc' }

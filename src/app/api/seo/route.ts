@@ -1,10 +1,14 @@
+// src/app/api/seo/route.ts
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+const PYTHON_API_URL = process.env.PYTHON_API_URL || "http://localhost:8000";
+const FREE_DAILY_LIMIT = 3;
+
 export async function POST(req: Request) {
     try {
-        // 1. Get Logged-in User
+        // ── 1. Auth check
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,63 +18,80 @@ export async function POST(req: Request) {
         const isPro = session.user.planType === "PRO";
         const body = await req.json();
 
-        // 2. ENFORCE FREE TIER LIMITS (3 per day)
+        // ── 2. Free tier rate limit — atomic transaction (fixes race condition)
         if (!isPro) {
-            const user = await prisma.user.findUnique({ where: { id: userId } });
-            if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+            try {
+                await prisma.$transaction(async (tx) => {
+                    const user = await tx.user.findUnique({
+                        where: { id: userId },
+                        select: { seoGensToday: true, lastUsageReset: true },
+                    });
 
-            const now = new Date();
-            const lastReset = new Date(user.lastUsageReset);
+                    if (!user) throw new Error("USER_NOT_FOUND");
 
-            // Is it a new day? (Midnight Auto-Reset)
-            const isNewDay =
-                now.getDate() !== lastReset.getDate() ||
-                now.getMonth() !== lastReset.getMonth() ||
-                now.getFullYear() !== lastReset.getFullYear();
+                    // ── Daily reset check
+                    const now = new Date();
+                    const lastReset = new Date(user.lastUsageReset);
+                    const isNewDay =
+                        now.getDate() !== lastReset.getDate() ||
+                        now.getMonth() !== lastReset.getMonth() ||
+                        now.getFullYear() !== lastReset.getFullYear();
 
-            let currentUsage = user.seoGensToday;
+                    const currentCount = isNewDay ? 0 : user.seoGensToday;
 
-            if (isNewDay) {
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: { seoGensToday: 0, lastUsageReset: now }
+                    // ── Block if at limit
+                    if (currentCount >= FREE_DAILY_LIMIT) {
+                        throw new Error("RATE_LIMIT");
+                    }
+
+                    // ── Atomically increment (or reset + set to 1 on new day)
+                    await tx.user.update({
+                        where: { id: userId },
+                        data: {
+                            seoGensToday: isNewDay ? 1 : { increment: 1 },
+                            lastUsageReset: isNewDay ? now : undefined,
+                        },
+                    });
                 });
-                currentUsage = 0;
-            }
-
-            // Block request if limit is reached!
-            if (currentUsage >= 3) {
-                return NextResponse.json({
-                    success: false,
-                    limitReached: true,
-                    message: "You have reached your free daily limit of 3 generations. Upgrade to Pro for unlimited access!"
-                }, { status: 403 });
+            } catch (txError: any) {
+                if (txError.message === "RATE_LIMIT") {
+                    return NextResponse.json({
+                        success: false,
+                        limitReached: true,
+                        message: `You've reached your free daily limit of ${FREE_DAILY_LIMIT} generations. Upgrade to Pro for unlimited access!`,
+                    }, { status: 429 });
+                }
+                if (txError.message === "USER_NOT_FOUND") {
+                    return NextResponse.json({ error: "User not found" }, { status: 404 });
+                }
+                throw txError; // unexpected DB error — let outer catch handle it
             }
         }
 
-        // 3. CALL PYTHON ENGINE (If allowed)
-        const pythonResponse = await fetch('http://localhost:8000/generate-seo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+        // ── 3. Call Python engine
+        const pythonResponse = await fetch(`${PYTHON_API_URL}/generate-seo`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
         });
 
-        if (!pythonResponse.ok) throw new Error("Python backend error");
+        if (!pythonResponse.ok) {
+            throw new Error(`Python backend returned ${pythonResponse.status}`);
+        }
 
         const data = await pythonResponse.json();
 
-        // 4. INCREMENT COUNTER ON SUCCESS (For Free Users)
-        if (!isPro && data.success) {
-            await prisma.user.update({
-                where: { id: userId },
-                data: { seoGensToday: { increment: 1 } }
-            });
-        }
+        // ── 4. PRO users: still track usage (optional analytics), no limit enforced
+        //    Counter was already incremented atomically inside the transaction above
+        //    for free users, so no second update needed here.
 
         return NextResponse.json(data);
 
     } catch (error) {
-        console.error("SEO API Gatekeeper Error:", error);
-        return NextResponse.json({ success: false, message: "Something went wrong." }, { status: 500 });
+        console.error("SEO API Error:", error);
+        return NextResponse.json(
+            { success: false, message: "Something went wrong." },
+            { status: 500 }
+        );
     }
 }

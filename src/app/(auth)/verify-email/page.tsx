@@ -22,14 +22,25 @@ function VerifyEmailContent() {
 
         const verify = async () => {
             try {
-                setTimeout(() => {
+                const response = await fetch('/api/auth/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
                     setStatus('success');
                     setMessage('Email verified successfully! Redirecting to login...');
                     setTimeout(() => router.push('/login'), 3000);
-                }, 2000);
+                } else {
+                    setStatus('error');
+                    setMessage(data.error || 'Invalid or expired token.');
+                }
             } catch (err) {
                 setStatus('error');
-                setMessage('Invalid or expired token.');
+                setMessage('An error occurred during verification.');
             }
         };
 

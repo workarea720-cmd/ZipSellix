@@ -328,22 +328,35 @@ function PnlTab({ d }: { d: ReportsData }) {
                 <CardHeader title="Profit Waterfall" subtitle="How revenue becomes profit" />
                 <div className="space-y-5 mt-6">
                     {waterfallRows.map((row, i) => (
-                        <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 relative">
                             <div className={`w-36 text-xs shrink-0 tracking-wider uppercase ${row.isTotal ? 'font-black text-[#304250]' : 'font-bold text-[#304250]/60'}`}>
                                 {row.label}
                             </div>
-                            <div className="flex-1 h-8 sm:h-10 bg-gray-50 rounded-xl overflow-hidden border border-[#304250]/5">
+                            <div className="flex-1 h-8 sm:h-10 bg-gray-50 rounded-xl overflow-hidden border border-[#304250]/5 flex items-center relative z-0">
+                                {/* FIX: Ensure bar is exactly 0% if value is 0 */}
                                 <motion.div
-                                    className="h-full rounded-xl flex items-center px-4 shadow-sm"
-                                    style={{ backgroundColor: row.isPositive ? (row.isTotal && row.amount < s.totalRevenue ? BRAND_GREEN : '#304250') : '#ef4444' }}
+                                    className="h-full rounded-xl flex items-center px-4 shadow-sm relative z-10"
+                                    style={{
+                                        backgroundColor: row.isPositive ? (row.isTotal && row.amount < s.totalRevenue ? BRAND_GREEN : '#304250') : '#ef4444'
+                                    }}
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${Math.max(4, row.pct)}%` }}
+                                    animate={{ width: row.amount === 0 ? '0%' : `${Math.max(4, row.pct)}%` }} // FIX applied here
                                     transition={{ duration: 0.8, delay: i * 0.1, ease: 'easeOut' }}
                                 >
-                                    <span className={`text-xs font-black tracking-wide ${row.isPositive ? 'text-white' : 'text-white'}`}>
-                                        {row.amount < 0 ? `–Rs ${Math.abs(row.amount).toLocaleString()}` : `Rs ${row.amount.toLocaleString()}`}
-                                    </span>
+                                    {/* Show text inside bar ONLY if amount is not zero */}
+                                    {row.amount !== 0 && (
+                                        <span className={`text-xs font-black tracking-wide ${row.isPositive ? 'text-white' : 'text-white'} whitespace-nowrap`}>
+                                            {row.amount < 0 ? `–Rs ${Math.abs(row.amount).toLocaleString()}` : `Rs ${row.amount.toLocaleString()}`}
+                                        </span>
+                                    )}
                                 </motion.div>
+
+                                {/* Show text OUTSIDE the bar (in gray) IF amount IS zero */}
+                                {row.amount === 0 && (
+                                    <span className="text-xs font-black tracking-wide text-[#304250]/40 pl-4 whitespace-nowrap absolute left-0">
+                                        Rs 0
+                                    </span>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -741,8 +754,8 @@ export default function ReportsView({ isPro = false, businessType = 'STOCK' }: R
                         </div>
                     )}
 
-                    {/* TABS NAVIGATION */}
-                    <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-2.5 mb-8">
+                    {/* TABS NAVIGATION - FIX: Desktop single row using flex, Mobile grid grid-cols-2 */}
+                    <div className="grid grid-cols-2 md:flex md:flex-nowrap md:overflow-x-auto custom-scrollbar md:pb-2 items-center gap-2.5 mb-8">
                         {TABS.map(tab => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -750,13 +763,13 @@ export default function ReportsView({ isPro = false, businessType = 'STOCK' }: R
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center justify-center md:justify-start gap-2 px-3 sm:px-5 py-3.5 sm:py-3 text-[11px] sm:text-xs uppercase tracking-widest font-black rounded-xl transition-all border outline-none active:scale-95 ${isActive
+                                    className={`flex items-center justify-center gap-1.5 px-2 md:px-4 py-3 text-[10px] md:text-[11px] uppercase tracking-widest font-black rounded-xl transition-all border outline-none active:scale-95 shrink-0 ${isActive
                                         ? 'text-white shadow-[0_4px_14px_rgba(32,164,107,0.3)] border-transparent'
                                         : 'bg-white text-[#304250]/50 hover:text-[#304250] hover:bg-gray-50 border-[#304250]/10 shadow-sm'
                                         }`}
                                     style={isActive ? { backgroundColor: BRAND_GREEN } : {}}
                                 >
-                                    <Icon size={16} className={`shrink-0 ${isActive ? 'text-white' : 'text-[#304250]/40'}`} />
+                                    <Icon size={14} className={`shrink-0 ${isActive ? 'text-white' : 'text-[#304250]/40'}`} />
                                     <span className="truncate">{tab.label}</span>
                                 </button>
                             );

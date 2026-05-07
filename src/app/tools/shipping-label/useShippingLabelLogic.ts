@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useExportDocument } from '@/hooks/useExportDocument';
 import { useBusinessStore } from '@/store/business-store';
 import { toast } from 'sonner';
+import { signOut } from 'next-auth/react';
 
 import { useLabelStore } from '@/store/shipping-label-store';
 import { ShippingLabelSchema, LabelData, TemplateType } from '@/types/shipping-label';
@@ -13,19 +14,11 @@ export function useShippingLabelLogic() {
     const { data, template, setTemplate, updateData, setInstructions } = useLabelStore();
     const componentRef = useRef<HTMLDivElement>(null);
 
-    // Wizard state
     const [currentStep, setCurrentStep] = useState(1);
-
-    // Booking state
     const [isBooking, setIsBooking] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(false);
-
-    // Quick Import search
     const [orderIdToSearch, setOrderIdToSearch] = useState('');
 
-
-
-    // Available couriers from Business Store
     const couriers = useBusinessStore((s) => s.couriers);
     const businessInfo = useBusinessStore((s) => s.businessInfo);
 
@@ -35,7 +28,6 @@ export function useShippingLabelLogic() {
         mode: 'onChange'
     });
 
-    // Sync form → store on every change
     useEffect(() => {
         const subscription = watch((value) => {
             // @ts-ignore
@@ -44,7 +36,6 @@ export function useShippingLabelLogic() {
         return () => subscription.unsubscribe();
     }, [watch, updateData]);
 
-    // Auto-fill sender details from Business Profile on mount
     useEffect(() => {
         const info = businessInfo;
 
@@ -70,12 +61,11 @@ export function useShippingLabelLogic() {
             if (info.logo) setValue('sellerLogo', info.logo);
         }
 
-        // Default courier to first one in business couriers list
         if (couriers.length > 0 && !data.courier) {
             setValue('courier', couriers[0].courierName);
             updateData({ courier: couriers[0].courierName });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +81,7 @@ export function useShippingLabelLogic() {
         }
     };
 
-    // ─── QUICK IMPORT LOGIC ────────────────────────────────────────────
+    // ─── QUICK IMPORT ──────────────────────────────────────────────────
     const handleFetchOrder = async () => {
         if (!orderIdToSearch.trim()) {
             toast.error("Please enter an Order ID to search.");
@@ -104,7 +94,9 @@ export function useShippingLabelLogic() {
             const orders = await safeFetch<any[]>(`${API_URL}/api/orders`);
             if (!orders) throw new Error("Failed to fetch orders.");
 
-            const foundOrder = orders.find((o: any) => o.orderId.toLowerCase() === orderIdToSearch.toLowerCase().trim());
+            const foundOrder = orders.find((o: any) =>
+                o.orderId.toLowerCase() === orderIdToSearch.toLowerCase().trim()
+            );
 
             if (foundOrder) {
                 const importedData: Partial<LabelData> = {
@@ -119,7 +111,7 @@ export function useShippingLabelLogic() {
                     paymentType: foundOrder.paymentType || 'COD',
                     codAmount: foundOrder.totalAmount || 0,
                     orderDate: foundOrder.date || new Date().toISOString().split('T')[0],
-                    trackingNumber: ''
+                    trackingNumber: '',
                 };
 
                 Object.entries(importedData).forEach(([key, val]) => {
@@ -138,14 +130,14 @@ export function useShippingLabelLogic() {
         }
     };
 
-    // ─── BOOK ORDER (API Call) ──────────────────────────────────────────
+    // ─── BOOK ORDER ────────────────────────────────────────────────────
     const handleBookOrder = async (): Promise<boolean> => {
         setIsBooking(true);
 
         try {
             const formData = getValues();
 
-            const result = await safeFetch<any>('/api/courier/book', {
+            const res = await fetch('/api/courier/book', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -171,7 +163,9 @@ export function useShippingLabelLogic() {
                 }),
             });
 
-            if (result?.status === 200) {
+            const result = await res.json();
+
+            if (res.ok && result?.status === 200) {
                 const bookingData: Partial<LabelData> = {
                     trackingNumber: result.trackingNumber,
                     routingCode: result.routingCode,
@@ -182,17 +176,24 @@ export function useShippingLabelLogic() {
 
                 updateData(bookingData);
                 setValue('trackingNumber', result.trackingNumber);
-
                 setBookingSuccess(true);
+
                 toast.success(`Order booked! Tracking: ${result.trackingNumber}`, {
                     description: `Routing: ${result.routingCode} via ${result.courierName}`,
                     duration: 5000,
                 });
                 return true;
+
             } else {
-                toast.error(result.message || 'Booking failed');
+                if (res.status === 401) {
+                    toast.error("Session expired. Please log in again.");
+                    signOut({ callbackUrl: '/login' });
+                    return false;
+                }
+                toast.error(result?.message || `Booking failed (${res.status})`);
                 return false;
             }
+
         } catch (err) {
             console.error("Failed to book order:", err);
             toast.error("Network error. Could not reach courier API.");
@@ -202,13 +203,12 @@ export function useShippingLabelLogic() {
         }
     };
 
-    // ─── VALIDATE & PROCEED ─────────────────────────────────────────────
+    // ─── VALIDATE & PROCEED ────────────────────────────────────────────
     const validateAndProceed = async () => {
-        // Validate the form fields for step 1
         const isValid = await trigger([
             'senderName', 'senderAddress',
             'receiverName', 'receiverPhone', 'receiverAddress', 'receiverCity',
-            'orderRef', 'courier', 'weight', 'pieces', 'paymentType'
+            'orderRef', 'courier', 'weight', 'pieces', 'paymentType',
         ]);
 
         if (isValid) {
@@ -220,11 +220,10 @@ export function useShippingLabelLogic() {
         }
     };
 
-    // ─── RESET FOR NEW ORDER ────────────────────────────────────────────
+    // ─── RESET FOR NEW ORDER ───────────────────────────────────────────
     const resetForNewOrder = () => {
         setCurrentStep(1);
         setBookingSuccess(false);
-        // Keep sender info, clear receiver & booking data
         const senderInfo = {
             senderName: data.senderName,
             senderPhone: data.senderPhone,
@@ -253,12 +252,12 @@ export function useShippingLabelLogic() {
         });
     };
 
-    // ─── PRINT LABEL ────────────────────────────────────────────────────
+    // ─── PRINT ─────────────────────────────────────────────────────────
     const handlePrint = () => {
         window.print();
     };
 
-    // ─── SHARE LABEL ────────────────────────────────────────────────────
+    // ─── SHARE ─────────────────────────────────────────────────────────
     const handleShare = async () => {
         try {
             const shareText = `Shipping Label — Tracking: ${data.trackingNumber || 'N/A'}, Routing: ${data.routingCode || 'N/A'}, Courier: ${data.courier}`;
@@ -277,7 +276,7 @@ export function useShippingLabelLogic() {
         }
     };
 
-    // ─── EXPORT LOGIC (4x6 orientation-aware) ──────────────────────────
+    // ─── EXPORT ────────────────────────────────────────────────────────
     const getPageDimensions = () => {
         const isLandscape = template === 'tcs' || template === 'trax' || template === 'minimal';
         if (isLandscape) {
@@ -299,13 +298,13 @@ export function useShippingLabelLogic() {
                         type: 'Shipping Label',
                         ref: data.trackingNumber || data.orderRef || 'Draft',
                         format,
-                        fileData: dataUrl
-                    })
+                        fileData: dataUrl,
+                    }),
                 });
             } catch (err) {
                 console.error("Failed to save document history", err);
             }
-        }
+        },
     });
 
     return {

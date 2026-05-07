@@ -1,23 +1,38 @@
-// src/app/api/compress/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-
-// Vercel/Next.js default body limit is small (4MB). 
-// For a real 100MB upload, you'd typically use S3 presigned URLs. 
-// For this SaaS engine, we assume a custom Node server or increased limit config.
+import path from 'path';
+import { writeFile, mkdir } from 'fs/promises';
+import { auth } from '@/auth';
+import { checkAndIncrement } from '@/lib/usageLimit';
 
 export async function POST(req: NextRequest) {
     try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Login karo pehle' }, { status: 401 });
+        }
+
+        const isPro = session.user.planType?.toUpperCase() === 'PRO';
+
+        // --- FREE TIER LIMIT CHECK (5/day) ---
+        if (!isPro) {
+            const check = await checkAndIncrement(session.user.id, 'compressionsToday');
+            if (!check.allowed) {
+                return NextResponse.json(
+                    { error: check.reason, limitReached: true },
+                    { status: 403 }
+                );
+            }
+        }
+
         const formData = await req.formData();
         const file = formData.get('file') as Blob;
         const settings = JSON.parse(formData.get('settings') as string);
-        const isPro = formData.get('isPro') === 'true';
 
         if (!file) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        // --- 1. ENFORCE LIMITS ---
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileSizeMB = buffer.length / (1024 * 1024);
 
@@ -28,42 +43,27 @@ export async function POST(req: NextRequest) {
             if (fileSizeMB > 100) return NextResponse.json({ error: 'Pro limit: 100MB max' }, { status: 403 });
         }
 
-        // --- 2. INITIALIZE SHARP ---
         let pipeline = sharp(buffer);
         const metadata = await pipeline.metadata();
 
-        // --- 3. RESIZE LOGIC ---
         if (settings.resizeMode !== 'original') {
             let width, height;
-
-            // Platform Presets
-            if (settings.resizeMode === 'daraz') { width = 1200; height = 1200; } // Square standard
+            if (settings.resizeMode === 'daraz') { width = 1200; height = 1200; }
             else if (settings.resizeMode === 'shopify') { width = 2048; height = 2048; }
             else if (settings.resizeMode === 'custom') {
                 width = settings.width ? parseInt(settings.width) : undefined;
                 height = settings.height ? parseInt(settings.height) : undefined;
             }
-
             if (width || height) {
-                pipeline = pipeline.resize({
-                    width,
-                    height,
-                    fit: settings.fit || 'inside', // 'inside' maintains aspect ratio
-                    withoutEnlargement: true
-                });
+                pipeline = pipeline.resize({ width, height, fit: settings.fit || 'inside', withoutEnlargement: true });
             }
         }
 
-        // --- 4. FORMAT & COMPRESSION ---
         let format = settings.format === 'original' ? metadata.format : settings.format;
-        const quality = isPro ? parseInt(settings.quality) : 75; // Free locked to 75%
+        const quality = isPro ? parseInt(settings.quality) : 75;
 
-        // WebP Auto Conversion (Pro Feature)
-        if (settings.autoWebP && isPro) {
-            format = 'webp';
-        }
+        if (settings.autoWebP && isPro) format = 'webp';
 
-        // Apply Compression settings
         if (format === 'jpeg' || format === 'jpg') {
             pipeline = pipeline.jpeg({ quality, mozjpeg: true });
         } else if (format === 'png') {
@@ -74,18 +74,20 @@ export async function POST(req: NextRequest) {
             pipeline = pipeline.avif({ quality });
         }
 
-        // --- 5. EXECUTE ---
         const processedBuffer = await pipeline.toBuffer();
         const info = await sharp(processedBuffer).metadata();
 
-        // Return as Base64 for immediate client display (SaaS style)
-        // In production with huge files, upload processedBuffer to S3 and return URL.
-        const base64 = `data:image/${format};base64,${processedBuffer.toString('base64')}`;
+        // ── Save to disk, return URL (not base64)
+        const filename = `compressed-${Date.now()}-${Math.random().toString(36).slice(2)}.${format}`;
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'temp');
+        await mkdir(uploadDir, { recursive: true });
+        await writeFile(path.join(uploadDir, filename), processedBuffer);
+        const url = `/uploads/temp/${filename}`;
 
         return NextResponse.json({
             success: true,
             data: {
-                image: base64,
+                url,                            // ← URL instead of base64
                 originalSize: buffer.length,
                 compressedSize: processedBuffer.length,
                 width: info.width,

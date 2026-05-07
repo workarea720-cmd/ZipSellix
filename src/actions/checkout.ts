@@ -12,8 +12,8 @@ export async function initiateCheckout(planId: string, price: number) {
 
     const userId = session.user.id;
 
-    // Simulate gateway redirect with URL parameters
-    const checkoutUrl = `/mock-checkout?userId=${userId}&plan=${planId}&amount=${price}`;
+    // Redirect to the manual payment verification checkout page
+    const checkoutUrl = `/checkout?userId=${userId}&plan=${planId}&amount=${price}`;
 
     redirect(checkoutUrl);
 }

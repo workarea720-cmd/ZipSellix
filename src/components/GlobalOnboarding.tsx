@@ -67,7 +67,7 @@ export default function GlobalOnboardingWizard({ onComplete }: Props) {
 
     const addCourier = (name: string) => {
         if (!name || couriers.some(c => c.courierName === name)) return;
-        const preset = COURIER_PRESETS[name] || { sameCity: 0, sameProvince: 0, crossProvince: 0, extraKg: 0 };
+        const preset = COURIER_PRESETS[name] || { sameCity: 0, sameProvince: 0, crossProvince: 0, extraKg: 0, codFeePercent: 0 };
         setCouriers([...couriers, { courierName: name, ...preset }]);
     };
 
@@ -342,15 +342,15 @@ export default function GlobalOnboardingWizard({ onComplete }: Props) {
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                                    {(['sameCity', 'sameProvince', 'crossProvince', 'extraKg'] as const).map(f => (
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+                                    {(['sameCity', 'sameProvince', 'crossProvince', 'extraKg', 'codFeePercent'] as const).map(f => (
                                         <div key={f} className="space-y-1.5 relative">
                                             <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
-                                                {f === 'sameCity' ? 'Same City' : f === 'sameProvince' ? 'Same Prov' : f === 'crossProvince' ? 'Cross Prov' : 'Extra /Kg'}
+                                                {f === 'sameCity' ? 'Same City' : f === 'sameProvince' ? 'Same Prov' : f === 'crossProvince' ? 'Cross Prov' : f === 'extraKg' ? 'Extra /Kg' : 'COD Fee %'}
                                             </label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-light text-xs font-medium">Rs</span>
-                                                <input type="number" min={0} value={c[f]} onChange={e => updateRate(i, f, e.target.value)}
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-light text-xs font-medium">{f === 'codFeePercent' ? '%' : 'Rs'}</span>
+                                                <input type="number" min={0} step={f === 'codFeePercent' ? 0.1 : 1} value={c[f]} onChange={e => updateRate(i, f, e.target.value)}
                                                     className="w-full pl-8 pr-3 py-2 text-sm border-2 border-card-border-subtle rounded-xl font-bold text-text-main outline-none focus:border-brand-primary focus:bg-card-bg bg-bg-subtle transition-colors" />
                                             </div>
                                         </div>

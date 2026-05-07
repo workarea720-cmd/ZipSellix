@@ -38,7 +38,6 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
 
     const [isSharing, setIsSharing] = useState(false);
 
-    // All templates in Templates.tsx are natively designed as 576x384 (Landscape)
     const labelW = 576;
     const labelH = 384;
 
@@ -59,7 +58,6 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
         setIsSharing(false);
     };
 
-    // Auto-book when entering step 2
     useEffect(() => {
         if (currentStep === 2 && !isBooking && !bookingSuccess) {
             handleBookOrder().then((success) => {
@@ -76,13 +74,11 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
     return (
         <div className="min-h-screen bg-[#f8fafc] font-sans text-[#304250] selection:bg-[#20A46B]/20 selection:text-[#20A46B]">
 
-            {/* ═══════════════════════════════════════════════════════════════
-                STEP 1: ORDER DETAILS
-            ════════════════════════════════════════════════════════════════ */}
+            {/* STEP 1 */}
             {currentStep === 1 && (
                 <div className="p-6 lg:p-10 animate-in fade-in duration-300">
 
-                    {/* Compact Stepper */}
+                    {/* Stepper */}
                     <div className="max-w-4xl mx-auto mb-8 bg-white p-3 rounded-2xl shadow-sm border border-[#304250]/10 flex items-center justify-between px-5 lg:px-8">
                         {stepLabels.map((label, idx) => {
                             const stepNum = idx + 1;
@@ -126,7 +122,6 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                                     placeholder="Enter Order ID (e.g. ORD-1234)"
                                     className="flex-1 bg-transparent px-4 py-2 text-sm font-bold outline-none placeholder:font-medium placeholder:text-[#304250]/40 text-[#304250]"
                                 />
-                                {/* YELLOW BRAND BUTTON FOR IMPORT */}
                                 <button type="button" onClick={handleFetchOrder} className="bg-[#EEBE1C] hover:bg-[#d9ab18] text-[#304250] px-5 py-2.5 rounded-lg transition-colors shadow-[0_4px_14px_rgba(238,190,28,0.3)] font-extrabold text-sm flex items-center gap-2 active:scale-95">
                                     Import
                                 </button>
@@ -134,9 +129,10 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                         </div>
 
                         <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* ─── LEFT COLUMN ─── */}
+                            {/* LEFT COLUMN */}
                             <div className="space-y-6">
-                                {/* Sender Info Card */}
+
+                                {/* Sender Info */}
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#304250]/10 relative">
                                     {businessInfo?.businessName && (
                                         <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-[#20A46B]/10 text-[#20A46B] px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border border-[#20A46B]/20">
@@ -185,7 +181,7 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                                     </div>
                                 </div>
 
-                                {/* Consignee Details Card */}
+                                {/* Consignee Details */}
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#304250]/10">
                                     <h3 className="text-base font-black text-[#304250] mb-5 flex items-center gap-2 border-b border-[#304250]/10 pb-3">
                                         <User size={18} className="text-[#20A46B]" /> Consignee (Receiver) Details
@@ -221,24 +217,30 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                                                 <input {...register('receiverCity')} placeholder="Destination City" className={`w-full p-3.5 text-sm font-bold border rounded-xl outline-none focus:border-[#20A46B] focus:ring-1 ring-[#20A46B]/20 bg-gray-50 focus:bg-white transition-colors shadow-sm text-[#304250] placeholder:font-medium placeholder:text-[#304250]/40 ${errors.receiverCity ? 'border-red-300 bg-red-50/30' : 'border-[#304250]/10'}`} />
                                                 {errors.receiverCity && <p className="text-red-500 text-[10px] mt-1 font-bold pl-1">{errors.receiverCity.message as string}</p>}
                                             </div>
+                                            {/* ✅ FIXED: Province * — mandatory, red border on error, error message */}
                                             <div>
-                                                <label className="text-[11px] font-extrabold text-[#304250]/60 uppercase tracking-widest mb-1.5 block">Province</label>
+                                                <label className="text-[11px] font-extrabold text-[#304250]/60 uppercase tracking-widest mb-1.5 block">Province *</label>
                                                 <div className="relative">
-                                                    <select {...register('receiverProvince')} className="w-full p-3.5 text-sm font-bold border border-[#304250]/10 rounded-xl outline-none focus:border-[#20A46B] focus:ring-1 ring-[#20A46B]/20 bg-gray-50 focus:bg-white transition-colors appearance-none pr-10 shadow-sm text-[#304250]">
+                                                    <select
+                                                        {...register('receiverProvince')}
+                                                        className={`w-full p-3.5 text-sm font-bold border rounded-xl outline-none focus:border-[#20A46B] focus:ring-1 ring-[#20A46B]/20 bg-gray-50 focus:bg-white transition-colors appearance-none pr-10 shadow-sm text-[#304250] ${errors.receiverProvince ? 'border-red-300 bg-red-50/30' : 'border-[#304250]/10'}`}
+                                                    >
                                                         <option value="">Select Province</option>
                                                         {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
                                                     </select>
                                                     <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#304250]/40 pointer-events-none" />
                                                 </div>
+                                                {errors.receiverProvince && <p className="text-red-500 text-[10px] mt-1 font-bold pl-1">{errors.receiverProvince.message as string}</p>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* ─── RIGHT COLUMN ─── */}
+                            {/* RIGHT COLUMN */}
                             <div className="space-y-6">
-                                {/* Parcel Details Card */}
+
+                                {/* Parcel Details */}
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#304250]/10">
                                     <h3 className="text-base font-black text-[#304250] mb-5 flex items-center gap-2 border-b border-[#304250]/10 pb-3">
                                         <Truck size={18} className="text-[#20A46B]" /> Parcel Details
@@ -298,7 +300,7 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                                     </div>
                                 </div>
 
-                                {/* Financials & Services Card */}
+                                {/* Financials & Services */}
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#304250]/10">
                                     <h3 className="text-base font-black text-[#304250] mb-5 flex items-center gap-2 border-b border-[#304250]/10 pb-3">
                                         <Banknote size={18} className="text-[#20A46B]" /> Financials & Services
@@ -367,9 +369,7 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════════════════════════════
-                STEP 2: BOOKING IN PROGRESS
-            ════════════════════════════════════════════════════════════════ */}
+            {/* STEP 2 */}
             {currentStep === 2 && (
                 <div className="flex items-center justify-center min-h-[70vh] p-6 animate-in fade-in duration-300">
                     <div className="max-w-[600px] w-full bg-white p-12 rounded-[32px] shadow-[0_8px_30px_rgba(48,66,80,0.04)] border border-[#304250]/10 text-center flex flex-col items-center">
@@ -416,14 +416,11 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                 </div>
             )}
 
-            {/* ═══════════════════════════════════════════════════════════════
-                STEP 3: LABEL PREVIEW
-            ════════════════════════════════════════════════════════════════ */}
+            {/* STEP 3 */}
             {currentStep === 3 && (
                 <div className="p-6 lg:p-10 pt-6 animate-in fade-in duration-300">
                     <div className="max-w-4xl mx-auto flex flex-col items-center">
 
-                        {/* Compact Stepper */}
                         <div className="w-full mb-6 bg-white p-3 rounded-2xl shadow-sm border border-[#304250]/10 flex items-center justify-between px-5 lg:px-8">
                             {stepLabels.map((label, idx) => {
                                 const stepNum = idx + 1;
@@ -449,52 +446,36 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                             })}
                         </div>
 
-                        {/* Toolbar Box */}
                         <div className="w-full bg-white p-3 rounded-2xl shadow-sm border border-[#304250]/10 flex flex-row items-center justify-between gap-4 mb-6">
-
-                            {/* Templates */}
                             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-1">
                                 {TEMPLATE_OPTIONS.map((t) => {
                                     const Icon = t.icon;
                                     const isActive = template === t.id;
                                     return (
-                                        <button
-                                            key={t.id}
-                                            onClick={() => setTemplate(t.id)}
-                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-bold border-2 outline-none active:scale-95 ${isActive ? 'bg-white text-[#20A46B] border-[#20A46B] shadow-[0_4px_14px_rgba(32,164,107,0.1)]' : 'bg-gray-50 text-[#304250]/60 border-transparent hover:border-[#304250]/10 hover:bg-white'}`}
-                                        >
+                                        <button key={t.id} onClick={() => setTemplate(t.id)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-bold border-2 outline-none active:scale-95 ${isActive ? 'bg-white text-[#20A46B] border-[#20A46B] shadow-[0_4px_14px_rgba(32,164,107,0.1)]' : 'bg-gray-50 text-[#304250]/60 border-transparent hover:border-[#304250]/10 hover:bg-white'}`}>
                                             <Icon size={18} className={isActive ? "text-[#20A46B]" : "text-[#304250]/40"} />
                                             <span className="whitespace-nowrap">{t.label}</span>
                                         </button>
                                     );
                                 })}
                             </div>
-
-                            {/* Actions (Icons + Text for Desktop) */}
                             <div className="flex items-center gap-2.5 shrink-0 border-l border-[#304250]/10 pl-4">
-                                {/* YELLOW ACCENT FOR SHARE */}
                                 <button onClick={handleShareClick} disabled={isSharing} className="flex items-center justify-center gap-2 bg-[#EEBE1C] hover:bg-[#d9ab18] text-[#304250] px-4 h-11 rounded-xl transition-all disabled:opacity-50 outline-none shadow-[0_4px_14px_rgba(238,190,28,0.3)] active:scale-95 font-extrabold text-sm whitespace-nowrap">
                                     {isSharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} Share
                                 </button>
-
                                 <button onClick={handleDownloadPDF} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-[#20A46B] hover:bg-[#20A46B]/90 text-white px-4 h-11 rounded-xl transition-all active:scale-95 disabled:opacity-70 outline-none shadow-[0_4px_14px_rgba(32,164,107,0.3)] font-extrabold text-sm whitespace-nowrap">
                                     {isDownloading && downloadFormat === 'pdf' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} PDF
                                 </button>
-
-                                {/* INVOICE TOOL STYLE PRINT BUTTON - DARK BLUE */}
                                 <button onClick={handlePrint} className="flex items-center justify-center gap-2 bg-[#304250] hover:bg-[#304250]/90 text-white px-4 h-11 rounded-xl transition-all outline-none shadow-[0_4px_14px_rgba(48,66,80,0.3)] active:scale-95 font-extrabold text-sm whitespace-nowrap">
                                     <Printer size={16} /> Print
                                 </button>
                             </div>
                         </div>
 
-                        {/* Secondary Info Bar (New Order + Tracking) */}
                         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 px-2">
-                            {/* YELLOW ACCENT FOR NEW ORDER */}
                             <button onClick={resetForNewOrder} className="flex items-center gap-2 text-xs font-extrabold text-[#304250] uppercase tracking-wider transition-colors bg-[#EEBE1C] hover:bg-[#d9ab18] px-5 py-3 rounded-xl shadow-[0_4px_14px_rgba(238,190,28,0.3)] active:scale-95">
                                 <RotateCcw size={16} /> New Order
                             </button>
-
                             <div className="flex items-center gap-4 text-sm bg-white px-5 py-3 rounded-xl border border-[#304250]/10 shadow-sm">
                                 <span className="text-[#304250]/60 font-extrabold text-[11px] uppercase tracking-wider">Tracking: <span className="text-[#304250] font-black font-mono ml-1 text-sm bg-gray-100 px-2 py-0.5 rounded">{data.trackingNumber}</span></span>
                                 {data.routingCode && (
@@ -506,17 +487,9 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                             </div>
                         </div>
 
-                        {/* Label Container - Forced Landscape Scaling */}
                         <div className="w-full flex justify-center items-center bg-gray-200/50 rounded-[32px] p-4 sm:p-6 border border-[#304250]/10 shadow-inner overflow-hidden relative" style={{ height: '500px' }}>
                             <div className="relative flex justify-center items-center w-full h-full">
-                                <div
-                                    className="absolute"
-                                    style={{
-                                        // Specific scale for desktop to fit the 576px wide canvas nicely
-                                        transform: 'scale(0.85)',
-                                        transformOrigin: 'center center',
-                                    }}
-                                >
+                                <div className="absolute" style={{ transform: 'scale(0.85)', transformOrigin: 'center center' }}>
                                     <div className="shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#304250]/10 overflow-hidden rounded-md bg-white">
                                         <div ref={componentRef} className="print-area bg-white relative shrink-0 m-0 p-0 box-border" style={{ width: `${labelW}px`, height: `${labelH}px` }}>
                                             {renderTemplate()}
@@ -525,7 +498,6 @@ export default function DesktopUI({ logic }: { logic: ShippingLabelLogicReturn }
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             )}

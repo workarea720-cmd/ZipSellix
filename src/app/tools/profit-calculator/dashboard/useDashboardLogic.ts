@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useBusinessStore } from '@/store/business-store';
 
 export interface DashboardProps {
     data: any;
@@ -127,7 +128,10 @@ export function useDashboardLogic({ data, products = [], setActiveTab }: Dashboa
         return products.filter((p: any) => (p.currentStock || 0) <= 3);
     }, [products]);
 
-    const netProfit = summary.netProfit || 0;
+    const store = useBusinessStore();
+    const grossRevenue = orders.reduce((sum: number, o: any) => sum + (Number(o.totalAmount) || 0), 0);
+    const totalPackagingCost = orders.length * store.getVariableCostPerOrder();
+    const netProfit = grossRevenue - store.getMonthlyFixedCosts() - totalPackagingCost;
 
     return {
         summary,

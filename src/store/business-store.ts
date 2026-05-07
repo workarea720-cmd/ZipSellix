@@ -1,9 +1,12 @@
-"use client"; // REQUIRED: Prevents Next.js server crashes when using Zustand's persist (localStorage)
+"use client";
+// src/store/business-store.ts
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getBusinessProfile, updateBusinessProfile } from '@/actions/profile';
-import { API_URL, safeFetch } from '@/lib/api-client';
+
+// ── Python backend URL from env (never hardcoded)
+const PYTHON_URL = process.env.NEXT_PUBLIC_PYTHON_URL || 'http://localhost:8000';
 
 // ─── TypeScript Interfaces ───────────────────────────────────────────
 
@@ -13,6 +16,7 @@ export interface CourierRate {
     sameProvince: number;
     crossProvince: number;
     extraKg: number;
+    codFeePercent: number;
 }
 
 export interface AccountInfo {
@@ -45,6 +49,8 @@ export interface BusinessState {
     salesChannels: string[];
     couriers: CourierRate[];
     expenses: ExpensesInfo;
+    // ── Sync state tracking
+    pythonSyncPending: boolean;
 }
 
 interface BusinessActions {
@@ -56,11 +62,16 @@ interface BusinessActions {
     removeCourier: (index: number) => void;
     updateCourier: (index: number, data: Partial<CourierRate>) => void;
     setExpenses: (data: Partial<ExpensesInfo>) => void;
-    getTotalExpense: () => number;
+    // ── Fixed monthly costs only (hosting + internet + rent + salary)
+    getMonthlyFixedCosts: () => number;
+    // ── Variable cost per single order
+    getVariableCostPerOrder: () => number;
     isOnboardingComplete: () => boolean;
     resetStore: () => void;
     loadProfile: () => Promise<void>;
     saveProfile: () => Promise<void>;
+    // ── Manual retry for failed Python sync
+    syncToPython: () => Promise<void>;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -72,12 +83,12 @@ export const SALES_CHANNEL_OPTIONS = [
 ] as const;
 
 export const COURIER_PRESETS: Record<string, Omit<CourierRate, 'courierName'>> = {
-    PostEx: { sameCity: 100, sameProvince: 165, crossProvince: 201, extraKg: 50 },
-    Leopard: { sameCity: 150, sameProvince: 180, crossProvince: 220, extraKg: 100 },
-    TCS: { sameCity: 200, sameProvince: 250, crossProvince: 300, extraKg: 120 },
-    Trax: { sameCity: 130, sameProvince: 160, crossProvince: 190, extraKg: 90 },
-    CallCourier: { sameCity: 140, sameProvince: 170, crossProvince: 200, extraKg: 95 },
-    'M&P': { sameCity: 180, sameProvince: 210, crossProvince: 240, extraKg: 110 },
+    PostEx: { sameCity: 100, sameProvince: 165, crossProvince: 201, extraKg: 50, codFeePercent: 1.5 },
+    Leopard: { sameCity: 150, sameProvince: 180, crossProvince: 220, extraKg: 100, codFeePercent: 2 },
+    TCS: { sameCity: 200, sameProvince: 250, crossProvince: 300, extraKg: 120, codFeePercent: 1.5 },
+    Trax: { sameCity: 130, sameProvince: 160, crossProvince: 190, extraKg: 90, codFeePercent: 2 },
+    CallCourier: { sameCity: 140, sameProvince: 170, crossProvince: 200, extraKg: 95, codFeePercent: 2 },
+    'M&P': { sameCity: 180, sameProvince: 210, crossProvince: 240, extraKg: 110, codFeePercent: 1.5 },
 };
 
 export const COURIER_NAMES = Object.keys(COURIER_PRESETS);
@@ -90,7 +101,37 @@ const defaultState: BusinessState = {
     salesChannels: [],
     couriers: [],
     expenses: { hosting: 0, internet: 0, rent: 0, salary: 0, packagingCost: 0 },
+    pythonSyncPending: false,
 };
+
+// ─── Helper: build Python setup payload ─────────────────────────────
+
+function buildPythonPayload(state: BusinessState) {
+    return {
+        businessType: state.businessInfo.businessType || 'STOCK',
+        businessName: state.businessInfo.businessName,
+        ownerName: state.account.name,
+        city: state.businessInfo.city,
+        province: state.businessInfo.province,
+        businessTypes: state.salesChannels,
+        logo: state.businessInfo.logo || undefined,
+        phone: state.businessInfo.phone,
+        address: state.businessInfo.address,
+        monthlyRent: state.expenses.rent,
+        monthlySalary: state.expenses.salary,
+        monthlyHosting: state.expenses.hosting,
+        monthlyInternet: state.expenses.internet,
+        packagingCost: state.expenses.packagingCost,
+        courierRates: state.couriers.map(c => ({
+            name: c.courierName,
+            sameCity: c.sameCity,
+            sameProv: c.sameProvince,
+            crossProv: c.crossProvince,
+            kg: c.extraKg,
+            codFeePercent: c.codFeePercent,
+        })),
+    };
+}
 
 // ─── Store ───────────────────────────────────────────────────────────
 
@@ -99,44 +140,32 @@ export const useBusinessStore = create<BusinessState & BusinessActions>()(
         (set, get) => ({
             ...defaultState,
 
-            setAccount: (data) =>
-                set((s) => ({ account: { ...s.account, ...data } })),
+            setAccount: (data) => set((s) => ({ account: { ...s.account, ...data } })),
+            setBusinessInfo: (data) => set((s) => ({ businessInfo: { ...s.businessInfo, ...data } })),
+            setSalesChannels: (channels) => set({ salesChannels: channels }),
+            setCouriers: (couriers) => set({ couriers }),
+            addCourier: (courier) => set((s) => ({ couriers: [...s.couriers, courier] })),
+            removeCourier: (index) => set((s) => ({ couriers: s.couriers.filter((_, i) => i !== index) })),
+            updateCourier: (index, data) => set((s) => ({
+                couriers: s.couriers.map((c, i) => (i === index ? { ...c, ...data } : c)),
+            })),
+            setExpenses: (data) => set((s) => ({ expenses: { ...s.expenses, ...data } })),
 
-            setBusinessInfo: (data) =>
-                set((s) => ({ businessInfo: { ...s.businessInfo, ...data } })),
-
-            setSalesChannels: (channels) =>
-                set({ salesChannels: channels }),
-
-            setCouriers: (couriers) =>
-                set({ couriers }),
-
-            addCourier: (courier) =>
-                set((s) => ({ couriers: [...s.couriers, courier] })),
-
-            removeCourier: (index) =>
-                set((s) => ({ couriers: s.couriers.filter((_, i) => i !== index) })),
-
-            updateCourier: (index, data) =>
-                set((s) => ({
-                    couriers: s.couriers.map((c, i) => (i === index ? { ...c, ...data } : c)),
-                })),
-
-            setExpenses: (data) =>
-                set((s) => ({ expenses: { ...s.expenses, ...data } })),
-
-            getTotalExpense: () => {
+            // ── Fixed monthly costs (packaging is NOT included — it's variable)
+            getMonthlyFixedCosts: () => {
                 const e = get().expenses;
-                // FIX: packagingCost is now properly included in the total calculation
-                return e.hosting + e.internet + e.rent + e.salary + e.packagingCost;
+                return e.hosting + e.internet + e.rent + e.salary;
             },
 
-            isOnboardingComplete: () => {
-                return get().businessInfo.businessName.trim().length > 0;
-            },
+            // ── Variable cost applied per order (not monthly)
+            getVariableCostPerOrder: () => get().expenses.packagingCost,
+
+            isOnboardingComplete: () => get().businessInfo.businessName.trim().length > 0,
 
             resetStore: () => set({ ...defaultState }),
 
+            // ── Load from Postgres → update local state
+            // NO auto-sync to Python here — only sync when user explicitly saves
             loadProfile: async () => {
                 try {
                     const data = await getBusinessProfile();
@@ -151,105 +180,88 @@ export const useBusinessStore = create<BusinessState & BusinessActions>()(
                                 address: s.address || '',
                                 city: p.city || '',
                                 province: p.province || 'Punjab',
-                                // 👇 YAHAN TypeScript ERROR FIX KIYA HAI
                                 businessType: (p as any).businessType || 'STOCK',
                             },
-                            account: { ...get().account, name: p.ownerName || '' },
+                            account: {
+                                ...get().account,
+                                name: p.ownerName || '',
+                            },
                             salesChannels: s.channels || [],
-                            couriers: Array.isArray(s.courierRates) ? s.courierRates.map((c: any) => ({
-                                courierName: c.name,
-                                sameCity: c.sameCity,
-                                sameProvince: c.sameProv,
-                                crossProvince: c.crossProv,
-                                extraKg: c.kg
-                            })) : [],
+                            couriers: Array.isArray(s.courierRates)
+                                ? s.courierRates.map((c: any) => ({
+                                    courierName: c.name,
+                                    sameCity: c.sameCity,
+                                    sameProvince: c.sameProv,
+                                    crossProvince: c.crossProv,
+                                    extraKg: c.kg,
+                                    codFeePercent: c.codFeePercent || 0,
+                                }))
+                                : [],
                             expenses: {
                                 hosting: s.monthlyHosting || 0,
                                 internet: s.monthlyInternet || 0,
                                 rent: s.monthlyRent || 0,
                                 salary: s.monthlySalary || 0,
-                                packagingCost: s.packagingCost || 0
-                            }
+                                packagingCost: s.packagingCost || 0,
+                            },
                         });
-
-                        // 👇 Auto-sync to Python Backend directly after loading from Postgres
-                        try {
-                            const state = get();
-                            await safeFetch(`${API_URL}/api/business/setup`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    businessType: state.businessInfo.businessType || "STOCK",
-                                    businessName: state.businessInfo.businessName,
-                                    ownerName: state.account.name,
-                                    city: state.businessInfo.city,
-                                    province: state.businessInfo.province,
-                                    monthlyRent: state.expenses.rent,
-                                    monthlySalary: state.expenses.salary,
-                                    monthlyHosting: state.expenses.hosting,
-                                    monthlyInternet: state.expenses.internet,
-                                    packagingCost: state.expenses.packagingCost,
-                                    courierRates: state.couriers.map((c: any) => ({
-                                        name: c.courierName,
-                                        sameCity: c.sameCity,
-                                        sameProv: c.sameProvince,
-                                        crossProv: c.crossProvince,
-                                        kg: c.extraKg
-                                    }))
-                                })
-                            });
-                        } catch (e) { console.error("Sync to python failed", e); }
                     }
                 } catch (e) {
-                    console.error("Failed to load profile from DB", e);
+                    console.error('Failed to load profile from DB:', e);
                 }
             },
 
+            // ── Save to Postgres first, then sync to Python
+            // If Python sync fails: set pending flag — don't silently swallow
             saveProfile: async () => {
                 try {
                     const state = get();
-                    const payload = {
-                        businessType: state.businessInfo.businessType || "STOCK",
-                        businessName: state.businessInfo.businessName,
-                        ownerName: state.account.name,
-                        city: state.businessInfo.city,
-                        province: state.businessInfo.province,
-                        businessTypes: state.salesChannels,
-                        logo: state.businessInfo.logo || undefined,
-                        phone: state.businessInfo.phone,
-                        address: state.businessInfo.address,
-                        monthlyRent: state.expenses.rent,
-                        monthlySalary: state.expenses.salary,
-                        monthlyHosting: state.expenses.hosting,
-                        monthlyInternet: state.expenses.internet,
-                        packagingCost: state.expenses.packagingCost,
-                        courierRates: state.couriers.map(c => ({
-                            name: c.courierName,
-                            sameCity: c.sameCity,
-                            sameProv: c.sameProvince,
-                            crossProv: c.crossProvince,
-                            kg: c.extraKg
-                        }))
-                    };
+                    const payload = buildPythonPayload(state);
+
+                    // Step 1: Save to Postgres (source of truth)
                     const res = await updateBusinessProfile(payload);
                     if (!res.success) throw new Error(res.error);
 
-                    // 👇 Auto-sync to Python Backend after successfully saving to Postgres
-                    try {
-                        await safeFetch(`${API_URL}/api/business/setup`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload)
-                        });
-                    } catch (e) { console.error("Python sync failed", e); }
+                    // Step 2: Sync to Python backend
+                    await get().syncToPython();
 
                 } catch (e) {
-                    console.error("Failed to save profile to DB", e);
+                    console.error('Failed to save profile:', e);
+                    throw e; // re-throw so UI can show error toast
+                }
+            },
+
+            // ── Sync to Python via Next.js proxy route (proxy adds X-User-Id from session)
+            syncToPython: async () => {
+                const state = get();
+                try {
+                    // ── Call our Next.js proxy — it adds X-User-Id server-side
+                    const res = await fetch('/api/profile/sync-python', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(buildPythonPayload(state)),
+                    });
+
+                    if (!res.ok) throw new Error(`Python sync failed: ${res.status}`);
+
+                    // ── Clear pending flag on success
+                    set({ pythonSyncPending: false });
+
+                } catch (e) {
+                    // ── Mark as pending so UI can show "Re-sync" button
+                    set({ pythonSyncPending: true });
+                    console.error('Python sync failed — marked as pending:', e);
+                    // Do NOT re-throw — Postgres save already succeeded
                 }
             },
         }),
         {
             name: 'zipsellix-business-store',
+            // ── Don't persist pythonSyncPending across sessions
+            partialize: (state) => {
+                const { pythonSyncPending, ...rest } = state;
+                return rest;
+            },
         }
     )
 );

@@ -58,6 +58,9 @@ model User {
   reportsDownloadedToday Int       @default(0)
   totalPdfsDownloaded    Int       @default(0)
   lastPdfDownload        DateTime  @default(now())
+  bgRemovalsToday         Int       @default(0)
+  compressionsToday      Int       @default(0)
+  calculationsToday      Int       @default(0)
   lastUsageReset         DateTime  @default(now()) // 👈 Added for daily reset tracking
 
   createdAt       DateTime  @default(now())
@@ -69,6 +72,7 @@ model User {
   services           Service[] // 👈 Yeh wapas add kiya hai
   expenses           Expense[]
   verificationLogs   VerificationLog[]
+  shipments          Shipment[]
 }
 
 // ===================================================
@@ -242,4 +246,80 @@ model Expense {
   date      DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+}
+// ===================================================
+// --- SHIPMENTS (Courier Booking Records) ---
+// ===================================================
+
+enum ShipmentStatus {
+  BOOKED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  PREPAID
+}
+
+model Shipment {
+  id                String         @id @default(uuid())
+
+  // Tracking
+  trackingNumber    String         @unique
+  routingCode       String?
+  courierName       String
+  shipmentStatus    ShipmentStatus @default(BOOKED)
+
+  // Booking details
+  orderRef          String?
+  paymentType       PaymentMethod  @default(COD)
+  codAmount         Float          @default(0)
+  weight            String?
+  pieces            String?
+  contents          String?
+
+  // Sender
+  senderName        String
+  senderPhone       String?
+  senderAddress     String?
+  senderCity        String?
+
+  // Receiver
+  receiverName      String
+  receiverPhone     String
+  receiverAddress   String
+  receiverCity      String
+  receiverProvince  String?
+  receiverEmail     String?
+
+  // Special handling
+  fragile           Boolean        @default(false)
+  dontOpen          Boolean        @default(false)
+  callFirst         Boolean        @default(false)
+  insurance         Boolean        @default(false)
+  signature         Boolean        @default(false)
+  specialInstructions String?
+
+  // Courier response
+  courierBookingId  String?        // CN from courier
+  courierResponse   Json?          // Full API response saved
+
+  // Timestamps
+  bookedAt          DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  estimatedDelivery DateTime?
+
+  // Relations
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([trackingNumber])
+  @@index([shipmentStatus])
 }

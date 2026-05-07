@@ -7,7 +7,7 @@ export interface CompressedImage {
     id: string;
     originalFile: File;
     preview: string;
-    result?: string;
+    result?: string;        // ── Stores a URL (/uploads/temp/...) not base64
     originalSize: number;
     compressedSize?: number;
     status: 'pending' | 'processing' | 'done' | 'error';
@@ -73,7 +73,7 @@ export function useImageCompressorLogic() {
         format: 'original',
         resizeMode: 'original',
         width: '',
-        height: ''
+        height: '',
     });
 
     /* ── Dropzone ── */
@@ -83,7 +83,7 @@ export function useImageCompressorLogic() {
             originalFile: file,
             preview: URL.createObjectURL(file),
             originalSize: file.size,
-            status: 'pending' as const
+            status: 'pending' as const,
         }));
         setImages(prev => [...prev, ...newImages]);
     }, []);
@@ -109,49 +109,88 @@ export function useImageCompressorLogic() {
             const formData = new FormData();
             formData.append('file', img.originalFile);
             formData.append('settings', JSON.stringify(settings));
-            formData.append('isPro', 'true'); // Bypass any backend restrictions for clean UI
+            // isPro is NOT sent — backend reads it from session (secure)
+
             try {
                 const res = await fetch('/api/compress', { method: 'POST', body: formData });
                 const data = await res.json();
+
+                if (res.status === 403 && data.limitReached) {
+                    // Free tier limit reached — stop processing remaining images
+                    setImages(prev => prev.map(p =>
+                        p.id === img.id
+                            ? { ...p, status: 'error', error: data.error || 'Daily limit reached. Upgrade to Pro!' }
+                            : p
+                    ));
+                    break;
+                }
+
                 if (data.success) {
                     setImages(prev => prev.map(p => p.id === img.id ? {
-                        ...p, status: 'done', result: data.data.image, compressedSize: data.data.compressedSize
+                        ...p,
+                        status: 'done',
+                        result: data.data.url,
+                        compressedSize: data.data.compressedSize,
                     } : p));
-                } else { throw new Error(data.error); }
+                } else {
+                    throw new Error(data.error);
+                }
             } catch {
-                setImages(prev => prev.map(p => p.id === img.id ? { ...p, status: 'error', error: 'Failed' } : p));
+                setImages(prev => prev.map(p =>
+                    p.id === img.id ? { ...p, status: 'error', error: 'Failed' } : p
+                ));
             }
         }
+
         setIsCompressing(false);
     };
 
-    /* ── Downloads ── */
+    /* ── Single download ── */
     const downloadSingle = (img: CompressedImage) => {
         if (!img.result) return;
         const link = document.createElement('a');
         link.href = img.result;
-        const ext = settings.format === 'original' ? img.originalFile.name.split('.').pop() : settings.format;
+        const ext = settings.format === 'original'
+            ? img.originalFile.name.split('.').pop()
+            : settings.format;
         link.download = `optimized-${img.originalFile.name.split('.')[0]}.${ext}`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
 
+    /* ── Bulk ZIP download ── */
     const downloadAllZip = async () => {
         const zip = new JSZip();
         const doneImages = images.filter(i => i.status === 'done' && i.result);
-        doneImages.forEach(img => {
-            if (img.result) {
-                const base64Data = img.result.split(',')[1];
-                const ext = settings.format === 'original' ? img.originalFile.name.split('.').pop() : settings.format;
-                zip.file(`optimized-${img.originalFile.name.split('.')[0]}.${ext}`, base64Data, { base64: true });
+
+        await Promise.all(doneImages.map(async (img) => {
+            if (!img.result) return;
+            try {
+                const response = await fetch(img.result);
+                const arrayBuf = await response.arrayBuffer();
+                const ext = settings.format === 'original'
+                    ? img.originalFile.name.split('.').pop()
+                    : settings.format;
+                zip.file(
+                    `optimized-${img.originalFile.name.split('.')[0]}.${ext}`,
+                    arrayBuf
+                );
+            } catch {
+                console.warn(`Could not fetch ${img.result} for zip`);
             }
-        });
+        }));
+
         const content = await zip.generateAsync({ type: 'blob' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
         link.download = 'compressed-images.zip';
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
 
+    /* ── Helpers ── */
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -175,7 +214,7 @@ export function useImageCompressorLogic() {
         processImages,
         downloadSingle, downloadAllZip,
         formatBytes,
-        doneImages, hasDone, hasPending, totalSaved, totalOriginal, savingsPercent
+        doneImages, hasDone, hasPending, totalSaved, totalOriginal, savingsPercent,
     };
 }
 

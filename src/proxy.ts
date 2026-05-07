@@ -1,3 +1,4 @@
+// src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -13,7 +14,7 @@ export default function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // 2. Cookie-based auth check (no NextAuth wrapper = no UnknownAction errors)
+    // 2. Cookie-based auth check
     const normalCookie = req.cookies.get("authjs.session-token");
     const secureCookie = req.cookies.get("__Secure-authjs.session-token");
     const oldCookie = req.cookies.get("next-auth.session-token");
@@ -22,8 +23,15 @@ export default function middleware(req: NextRequest) {
     const isLoggedIn = !!(normalCookie || secureCookie || oldCookie || oldSecureCookie);
 
     // 3. Route classifications
-    const isProtectedRoute = pathname.startsWith('/tools') || pathname.startsWith('/dashboard') || pathname.startsWith('/setup');
-    const isAuthRoute = pathname === '/login' || pathname === '/signup';
+    const isProtectedRoute =
+        pathname.startsWith('/tools') ||
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/setup') ||
+        pathname.startsWith('/admin');     // ── FIXED: /admin is now protected
+
+    const isAuthRoute =
+        pathname === '/login' ||
+        pathname === '/signup';
 
     // 4. Redirect legacy routes to the single dashboard
     const legacyRedirectRoutes = ['/', '/dashboard', '/setup'];
@@ -31,7 +39,7 @@ export default function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL('/tools/profit-calculator', req.url));
     }
 
-    // 5. Protect routes - redirect to login if not authenticated
+    // 5. Protect routes — redirect to login if not authenticated
     if (isProtectedRoute && !isLoggedIn) {
         return NextResponse.redirect(new URL('/login', req.url));
     }
@@ -45,10 +53,7 @@ export default function middleware(req: NextRequest) {
 }
 
 export const config = {
-    // Match all request paths except for the ones starting with:
-    // - api (API routes)
-    // - _next/static (static files)
-    // - _next/image (image optimization files)
-    // - favicon.ico (favicon file)
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.map$|.*\\.json$|\\.well-known).*)"],
+    matcher: [
+        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.map$|.*\\.json$|\\.well-known).*)",
+    ],
 };

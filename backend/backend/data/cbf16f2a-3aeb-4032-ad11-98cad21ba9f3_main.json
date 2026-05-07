@@ -1,0 +1,86 @@
+{
+    "profile": {
+        "isSetupComplete": false,
+        "businessType": "STOCK",
+        "businessName": "",
+        "ownerName": "",
+        "settings": {},
+        "orderCounter": 1002
+    },
+    "products": [],
+    "batches": [],
+    "orders": [
+        {
+            "id": "b8b6e51e",
+            "orderId": "ORD-1001",
+            "customerName": "ahmad",
+            "city": "sialkot",
+            "province": "Punjab",
+            "courier": "Trax",
+            "weight": 0.5,
+            "status": "DELIVERED",
+            "paymentType": "ONLINE",
+            "date": "2026-04-29",
+            "isFreeShipping": false,
+            "shippingCost": 160.0,
+            "actualShippingCost": 0.0,
+            "packagingCost": 45.0,
+            "itemsTotal": 1500.0,
+            "totalAmount": 1705.0,
+            "items": [
+                {
+                    "productId": "577a0aae",
+                    "quantity": 1,
+                    "salePrice": 1500.0
+                }
+            ]
+        },
+        {
+            "id": "389e91eb",
+            "orderId": "ORD-1002",
+            "customerName": "junaid",
+            "city": "sahiwal",
+            "province": "AJK",
+            "courier": "Trax",
+            "weight": 0.5,
+            "status": "DELIVERED",
+            "paymentType": "COD",
+            "date": "2026-04-29",
+            "isFreeShipping": false,
+            "shippingCost": 190.0,
+            "actualShippingCost": 0.0,
+            "packagingCost": 45.0,
+            "itemsTotal": 1000.0,
+            "totalAmount": 1235.0,
+            "items": [
+                {
+                    "productId": "ac5609b4",
+                    "quantity": 1,
+                    "salePrice": 1000.0
+                }
+            ]
+        }
+    ],
+    "services": [
+        {
+            "id": "577a0aae",
+            "name": "bag-print",
+            "productionCost": 1200.0,
+            "sellingPrice": 1500.0,
+            "estimatedTime": "3-5 Days",
+            "description": ""
+        },
+        {
+            "id": "ac5609b4",
+            "name": "bottle-print",
+            "productionCost": 700.0,
+            "sellingPrice": 1000.0,
+            "estimatedTime": "3-5 Days",
+            "description": "",
+            "deleted": true
+        }
+    ],
+    "stores": {},
+    "documents": [],
+    "shipments": []
+}
